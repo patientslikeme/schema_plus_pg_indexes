@@ -9,6 +9,7 @@ module SchemaPlusPgIndexes
           # indexes:
           # * +:expression+ - SQL expression to index.  column_name can be nil or ommitted, in which case :name must be provided
           # * +:operator_class+ - an operator class name or a hash mapping column name to operator class name
+          # * +:constraint_deferrability+ - a string specifying the deferrability of the index, such as 'DEFERRABLE INITIALLY DEFERRED' or 'DEFERRABLE INITIALLY IMMEDIATE'
           # * +:case_sensitive - setting to +false+ is a shorthand for :expression => 'LOWER(column_name)'
           #
           # The <tt>:case_sensitive => false</tt> option ties in with Rails built-in support for case-insensitive searching:
@@ -31,6 +32,7 @@ module SchemaPlusPgIndexes
 
             expression = options.delete(:expression)
             operator_classes = options.delete(:operator_class)
+            constraint_deferrability = options.delete(:constraint_deferrability)
             case_insensitive = (options.delete(:case_sensitive) == false)
 
             if expression

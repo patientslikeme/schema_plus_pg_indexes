@@ -39,11 +39,12 @@ module SchemaPlusPgIndexes
             result = env.connection.query(<<-SQL, 'SCHEMA')
               SELECT distinct i.relname, d.indisunique, d.indkey, pg_get_indexdef(d.indexrelid), t.oid,
                       m.amname, pg_get_expr(d.indpred, t.oid) as conditions, pg_get_expr(d.indexprs, t.oid) as expression,
-                      d.indclass
+                      d.indclass, pg_constraint.condeferrable, pg_constraint.condeferred
               FROM pg_class t
               INNER JOIN pg_index d ON t.oid = d.indrelid
               INNER JOIN pg_class i ON d.indexrelid = i.oid
               INNER JOIN pg_am m ON i.relam = m.oid
+              LEFT OUTER JOIN pg_constraint ON pg_constraint.conindid = i.oid
               WHERE i.relkind = 'i'
                 AND d.indisprimary = 'f'
                 AND t.relname = '#{table_name_without_namespace(env.table_name)}'
@@ -51,7 +52,7 @@ module SchemaPlusPgIndexes
               ORDER BY i.relname
             SQL
 
-            env.index_definitions += result.map do |(index_name, unique, indkey, inddef, oid, using, conditions, expression, indclass)|
+            env.index_definitions += result.map do |(index_name, unique, indkey, inddef, oid, using, conditions, expression, indclass, condeferrable, condeferred)|
               index_keys = indkey.split(" ")
               opclasses = indclass.split(" ")
 
@@ -97,6 +98,14 @@ module SchemaPlusPgIndexes
               desc_order_columns = inddef.scan(/(\w+) DESC/).flatten
               orders = desc_order_columns.any? ? Hash[column_names.map {|column| [column, desc_order_columns.include?(column) ? :desc : :asc]}] : {}
 
+              deferrability = if condeferrable
+                if condeferred
+                  'DEFERRABLE INITIALLY DEFERRED'
+                else
+                  'DEFERRABLE INITIALLY IMMEDIATE'
+                end
+              end
+
               ::ActiveRecord::ConnectionAdapters::IndexDefinition.new(env.table_name, column_names,
                                                                       :name => index_name,
                                                                       :unique => (unique == 't'),
@@ -105,7 +114,8 @@ module SchemaPlusPgIndexes
                                                                       :case_sensitive => case_sensitive,
                                                                       :using => using.downcase == "btree" ? nil : using.to_sym,
                                                                       :operator_classes => operator_classes,
-                                                                      :expression => expression)
+                                                                      :expression => expression,
+                                                                      :constraint_deferrability => deferrability)
             end
           end
 
