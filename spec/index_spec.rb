@@ -47,6 +47,12 @@ describe "index" do
     expect(index_for([:login, :address]).operator_classes).to eq({"login" => 'varchar_pattern_ops', "address" => 'text_pattern_ops'})
   end
 
+
+  it "should assign deferrability" do
+    add_index(:users, [:login, :address], {:unique => true, :constraint_deferrability => 'DEFERRABLE INITIALLY DEFERRED'})
+    expect(index_for([:login, :address]).constraint_deferrability).to eq('DEFERRABLE INITIALLY DEFERRED')
+  end
+
   it "should allow to specify actual expression only" do
     add_index(:users, :expression => "upper(login)", :name => 'users_login_index')
     index = User.indexes.detect { |i| i.name == 'users_login_index' }
