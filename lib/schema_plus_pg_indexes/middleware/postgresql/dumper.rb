@@ -29,6 +29,9 @@ module SchemaPlusPgIndexes
                 options[:operator_class] = index_def.operator_classes
               end
             end
+            unless index_def.constraint_deferrability.blank?
+              index_dump.options[:constraint_deferrability] = index_def.constraint_deferrability
+            end
           end
 
 

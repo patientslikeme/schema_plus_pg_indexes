@@ -8,6 +8,7 @@ module SchemaPlusPgIndexes
 
         attr_accessor :expression
         attr_accessor :operator_classes
+        attr_accessor :constraint_deferrability
 
         def case_sensitive?
           @case_sensitive
@@ -28,6 +29,7 @@ module SchemaPlusPgIndexes
           options = args.dup.extract_options!
           @expression = options[:expression]
           @operator_classes = options[:operator_classes] || {}
+          @constraint_deferrability = options[:constraint_deferrability]
           @case_sensitive = options.include?(:case_sensitive) ? options[:case_sensitive] : true
         end
 
@@ -36,6 +38,7 @@ module SchemaPlusPgIndexes
           return false unless self.expression == other.expression
           return false unless !!self.case_sensitive? == !!other.case_sensitive?
           return false unless self.operator_classes == other.operator_classes
+          return false unless self.constraint_deferrability == other.constraint_deferrability
           return true
         end
 
