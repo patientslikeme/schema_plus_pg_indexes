@@ -30,10 +30,9 @@ module SchemaPlusPgIndexes
               end
             end
             unless index_def.constraint_deferrability.blank?
-              index_dump.options[:constraint_deferrability] = index_def.constraint_deferrability
+              options[:constraint_deferrability] = index_def.constraint_deferrability
             end
           end
-
 
         end
       end
